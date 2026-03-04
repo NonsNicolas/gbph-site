@@ -1,11 +1,11 @@
-// auth-ui.js (shared popup login + profile dropdown)
-// Usage in a page script:
-//   import { createClient } from "...supabase...";
-//   import { initAuthUI, requireAuth } from "./auth-ui.js";
-//   const supabase = createClient(...);
-//   const auth = initAuthUI(supabase);
-//   await auth.refresh();  // updates header UI
-//   await requireAuth(supabase, auth); // opens modal if not logged in
+ auth-ui.js (shared popup login + profile dropdown)
+Usage in a page script:
+import { createClient } from "...supabase...";
+import { initAuthUI, requireAuth } from "./auth-ui.js";
+const supabase = createClient(...);
+const auth = initAuthUI(supabase);
+await auth.refresh();  // updates header UI
+await requireAuth(supabase, auth); // opens modal if not logged in
 
 export function initAuthUI(supabase) {
   injectAuthModalIfMissing();
