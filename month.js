@@ -36,7 +36,7 @@ async function loadMonth() {
 
   // fetch reservations + blocks within month
   const [resvRes, blockRes] = await Promise.all([
-    supabase.from("reservations")
+    supabase.from("public reservations")
       .select("date")
       .gte("date", rangeStart)
       .lte("date", rangeEnd)
