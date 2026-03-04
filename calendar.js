@@ -9,6 +9,10 @@ await authUI.refresh();
 const $ = (id) => document.getElementById(id);
 
 const dateEl = $("date");
+// If coming from month view: calendar.html?date=MM-DD-YYYY
+const params = new URLSearchParams(window.location.search);
+const qDate = params.get("date");
+if (qDate) dateEl.value = qDate;
 const viewEl = $("view");
 const theadEl = $("thead");
 const tbodyEl = $("tbody");
