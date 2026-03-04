@@ -236,31 +236,153 @@ function injectAuthStyles() {
   const s = document.createElement("style");
   s.id = "gbAuthStyles";
   s.textContent = `
-    .gb-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:999; }
-    .gb-modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:16px; z-index:1000; }
-    .gb-card{ width:min(520px, 100%); background:#fff; border-radius:18px; border:1px solid #eee; box-shadow:0 20px 60px rgba(0,0,0,.18); padding:14px; }
-    .gb-card-head{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
-    .gb-title{ font-size:20px; font-weight:800; margin-bottom:8px; }
-    .gb-tabs{ display:flex; gap:8px; flex-wrap:wrap; }
-    .gb-tab{ padding:8px 12px; border-radius:999px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:13px; }
-    .gb-tab.active{ border-color:#111; }
-    .gb-x{ width:40px; height:40px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:16px; }
-    .gb-body{ margin-top:12px; display:grid; gap:10px; }
-    .gb-label{ font-size:12px; color:#555; }
-    .gb-input{ width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
-    .gb-btn{ padding:12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:16px; }
-    .gb-btn-primary{ border:none; background:#111; color:#fff; }
-    .gb-msg{ font-size:12px; color:#b00020; min-height:16px; }
-    .gb-hint{ font-size:12px; color:#777; }
-    .gb-profile{ position:relative; display:inline-block; }
-    .gb-menu{ position:absolute; right:0; top:calc(100% + 8px); width:160px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; z-index:50; }
-    .gb-menu-item{ width:100%; text-align:left; padding:10px 12px; border:none; background:#fff; cursor:pointer; font-size:14px; }
-    .gb-menu-item:hover{ background:#f6f6f6; }
-    .gb-btn-ghost{ background:#fff; }
-  `;
-  document.head.appendChild(s);
-}
+  /* Overlay + center */
+  .gb-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.45);
+    z-index:9999;
+  }
+  .gb-modal{
+    position:fixed; inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:10000;
+  }
 
+  /* Card */
+  .gb-card{
+    width:min(520px, 100%);
+    max-height:calc(100vh - 32px);
+    overflow:auto;
+    background:#fff;
+    border-radius:18px;
+    border:1px solid #eee;
+    box-shadow:0 20px 60px rgba(0,0,0,.18);
+    padding:16px;
+  }
+
+  .gb-card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+  }
+  .gb-title{
+    font-size:20px;
+    font-weight:800;
+    margin:0 0 8px 0;
+    line-height:1.2;
+  }
+
+  /* Tabs */
+  .gb-tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+  .gb-tab{
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid #ddd;
+    background:#fff;
+    cursor:pointer;
+    font-size:13px;
+    line-height:1;
+  }
+  .gb-tab.active{ border-color:#111; }
+
+  /* Close button */
+  .gb-x{
+    width:42px; height:42px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    background:#fff;
+    cursor:pointer;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* Body spacing */
+  .gb-body{
+    margin-top:14px;
+    display:grid;
+    gap:10px;
+  }
+  .gb-label{
+    font-size:12px;
+    color:#555;
+    margin-top:2px;
+  }
+
+  /* Inputs - stop site CSS from breaking them */
+  .gb-input{
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:12px 14px !important;
+    border-radius:12px !important;
+    border:1px solid #ddd !important;
+    font-size:16px !important;
+    line-height:1.2 !important;
+    background:#fff !important;
+    outline:none !important;
+  }
+  .gb-input:focus{
+    border-color:#111 !important;
+    box-shadow:0 0 0 3px rgba(17,17,17,.10) !important;
+  }
+
+  /* Buttons */
+  .gb-btn{
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    background:#fff;
+    cursor:pointer;
+    font-size:16px;
+  }
+  .gb-btn-primary{
+    border:none;
+    background:#111;
+    color:#fff;
+    width:100%;
+  }
+  .gb-btn-ghost{ background:#fff; }
+
+  /* Messages */
+  .gb-msg{ font-size:12px; color:#b00020; min-height:16px; }
+  .gb-hint{ font-size:12px; color:#777; }
+
+  /* Profile dropdown */
+  .gb-profile{ position:relative; display:inline-block; }
+  .gb-menu{
+    position:absolute; right:0; top:calc(100% + 8px);
+    width:160px;
+    background:#fff;
+    border:1px solid #eee;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    overflow:hidden;
+    z-index:50;
+  }
+  .gb-menu-item{
+    width:100%;
+    text-align:left;
+    padding:10px 12px;
+    border:none;
+    background:#fff;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .gb-menu-item:hover{ background:#f6f6f6; }
+
+  /* Mobile tweaks */
+  @media (max-width:420px){
+    .gb-card{ padding:14px; border-radius:16px; }
+    .gb-title{ font-size:18px; }
+    .gb-x{ width:40px; height:40px; }
+  }
+`;
+  }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
