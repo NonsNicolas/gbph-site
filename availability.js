@@ -78,7 +78,7 @@ async function render() {
     supabase.from("operating_hours").select("*").eq("day_of_week", day).single(),
     supabase.from("event_blocks").select("*").eq("day_of_week", day).eq("active", true),
     supabase.from("blocked_slots").select("court_id,start_time,end_time,reason").eq("date", date),
-    supabase.from("reservations").select("court_id,start_time,end_time").eq("date", date).eq("status", "confirmed"),
+    supabase.from("public reservations").select("court_id,start_time,end_time").eq("date", date).eq("status", "confirmed"),
   ]);
 
   if (hoursRes.error) {
