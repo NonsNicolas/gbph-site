@@ -1,267 +1,268 @@
-// auth-ui.js (Username + Password modal, with Login/Signup, and profile dropdown)
-// Uses Supabase email auth under the hood: username -> username@gbph.local
+// auth-ui.js — Username-only UI (uses Supabase email auth underneath)
+//
+// Username entered -> email generated: <username>@gbph.app
+// (Users never see email; they only use username + password)
 
 export function initAuthUI(supabase) {
-  injectStyles();
-  injectModal();
+  injectAuthStyles();
+  injectAuthModal();
 
   async function refresh() {
-    var profileArea = document.getElementById("profileArea");
+    const profileArea = document.getElementById("profileArea");
     if (!profileArea) return;
 
-    var res = await supabase.auth.getUser();
-    var user = res && res.data ? res.data.user : null;
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      profileArea.innerHTML = '<button id="btnProfileLogin" class="profileBtn">Login</button>';
-      var b = document.getElementById("btnProfileLogin");
-      if (b) b.onclick = function () { openAuth("login"); };
+      profileArea.innerHTML = `<button id="btnOpenAuth" class="gb-btn gb-btn-ghost">Login</button>`;
+      document.getElementById("btnOpenAuth").onclick = () => open("login");
       return;
     }
 
-    var username = emailToUsername(user.email || "");
-    profileArea.innerHTML =
-      '<div class="profileWrap">' +
-        '<button id="profileBtn" class="profileBtn"></button>' +
-        '<div id="profileMenu" class="profileMenu" style="display:none;">' +
-          '<button id="logoutBtn" class="menuItem">Log out</button>' +
-        '</div>' +
-      '</div>';
+    const username = emailToUsername(user.email || "");
+    profileArea.innerHTML = `
+      <div class="gb-profile">
+        <button id="gbProfileBtn" class="gb-btn gb-btn-ghost">${escapeHtml(username || "Profile")}</button>
+        <div id="gbProfileMenu" class="gb-menu" style="display:none;">
+          <button id="gbLogoutBtn" class="gb-menu-item">Log out</button>
+        </div>
+      </div>
+    `;
 
-    var btn = document.getElementById("profileBtn");
-    if (btn) btn.textContent = username || "Profile";
+    const btn = document.getElementById("gbProfileBtn");
+    const menu = document.getElementById("gbProfileMenu");
 
-    var menu = document.getElementById("profileMenu");
-    if (btn && menu) {
-      btn.onclick = function (e) {
-        e.stopPropagation();
-        menu.style.display = (menu.style.display === "none") ? "block" : "none";
-      };
-      document.addEventListener("click", function () {
-        if (menu) menu.style.display = "none";
-      });
-    }
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menu.style.display = (menu.style.display === "none") ? "block" : "none";
+    });
 
-    var logout = document.getElementById("logoutBtn");
-    if (logout) {
-      logout.onclick = async function () {
-        await supabase.auth.signOut();
-        await refresh();
-      };
-    }
+    document.addEventListener("click", () => {
+      if (menu) menu.style.display = "none";
+    });
+
+    document.getElementById("gbLogoutBtn").onclick = async () => {
+      await supabase.auth.signOut();
+      await refresh();
+    };
   }
 
-  function openAuth(mode) {
-    setMode(mode || "login");
-    showModal(true);
+  // ===== Modal control =====
+  let mode = "login"; // login | signup
+
+  function open(nextMode = "login") {
+    mode = nextMode;
+    setModeUI();
+
+    const overlay = document.getElementById("gbAuthOverlay");
+    const modal = document.getElementById("gbAuthModal");
+    overlay.style.display = "block";
+    modal.style.display = "block";
+
+    setTimeout(() => document.getElementById("gbUsername")?.focus(), 50);
   }
 
-  async function ensureAuthed(options) {
-    var force = options && options.force;
-    var res = await supabase.auth.getUser();
-    var user = res && res.data ? res.data.user : null;
-
-    if (!user && force) {
-      openAuth("login");
-      return null;
-    }
-    return user || null;
+  function close() {
+    document.getElementById("gbAuthOverlay").style.display = "none";
+    document.getElementById("gbAuthModal").style.display = "none";
+    setMessage("");
   }
 
-  // ---- Modal wiring ----
-  var currentMode = "login";
+  function setModeUI() {
+    const title = document.getElementById("gbAuthTitle");
+    const tabLogin = document.getElementById("gbTabLogin");
+    const tabSignup = document.getElementById("gbTabSignup");
+    const submit = document.getElementById("gbSubmit");
 
-  function setMode(mode) {
-    currentMode = (mode === "signup") ? "signup" : "login";
-
-    var tabLogin = document.getElementById("authTabLogin");
-    var tabSignup = document.getElementById("authTabSignup");
-    var submit = document.getElementById("authSubmit");
-    var title = document.getElementById("authTitle");
-    var msg = document.getElementById("authMsg");
-
-    if (msg) msg.textContent = "";
-
-    if (tabLogin) tabLogin.className = currentMode === "login" ? "authTab active" : "authTab";
-    if (tabSignup) tabSignup.className = currentMode === "signup" ? "authTab active" : "authTab";
-
-    if (submit) submit.textContent = currentMode === "login" ? "Login" : "Sign up";
-    if (title) title.textContent = currentMode === "login" ? "Login" : "Create account";
+    if (mode === "signup") {
+      title.textContent = "Create account";
+      tabSignup.classList.add("active");
+      tabLogin.classList.remove("active");
+      submit.textContent = "Sign up";
+    } else {
+      title.textContent = "Login";
+      tabLogin.classList.add("active");
+      tabSignup.classList.remove("active");
+      submit.textContent = "Login";
+    }
+    setMessage("");
   }
 
-  function showModal(show) {
-    var overlay = document.getElementById("authOverlay");
-    var modal = document.getElementById("authModal");
-    if (overlay) overlay.style.display = show ? "block" : "none";
-    if (modal) modal.style.display = show ? "block" : "none";
-
-    if (show) {
-      var u = document.getElementById("authUsername");
-      if (u) setTimeout(function(){ u.focus(); }, 50);
-    }
-  }
-
-  async function submitAuth() {
-    var u = document.getElementById("authUsername");
-    var p = document.getElementById("authPassword");
-    var msg = document.getElementById("authMsg");
-
-    var username = (u && u.value ? u.value : "").trim();
-    var password = (p && p.value ? p.value : "");
-
-    if (!username || !password) {
-      if (msg) msg.textContent = "Please enter username and password.";
-      return;
-    }
-
-    var email = usernameToEmail(username);
-
-    if (currentMode === "signup") {
-      var out1 = await supabase.auth.signUp({ email: email, password: password });
-      if (out1.error) {
-        if (msg) msg.textContent = out1.error.message;
-        return;
-      }
-      // Optional: store username in profiles (trigger already creates row)
-      await upsertUsername(username);
-      if (msg) msg.textContent = "Account created! You can login now.";
-      setMode("login");
-      return;
-    }
-
-    var out2 = await supabase.auth.signInWithPassword({ email: email, password: password });
-    if (out2.error) {
-      if (msg) msg.textContent = out2.error.message;
-      return;
-    }
-
-    await upsertUsername(username);
-    await refresh();
-    showModal(false);
-  }
-
-  async function upsertUsername(username) {
-    try {
-      // This will work if your policies allow update own profile (you already have update policy)
-      var userRes = await supabase.auth.getUser();
-      var user = userRes && userRes.data ? userRes.data.user : null;
-      if (!user) return;
-      await supabase.from("profiles").update({ full_name: username }).eq("id", user.id);
-    } catch (e) {}
+  function setMessage(text) {
+    const el = document.getElementById("gbAuthMsg");
+    el.textContent = text || "";
   }
 
   function usernameToEmail(username) {
-    // treat username as email local-part
-    // remove spaces
-    var clean = username.replace(/\s+/g, "");
-    // if they typed an email anyway, keep it
-    if (clean.indexOf("@") !== -1) return clean;
-    return clean.toLowerCase() + "@gbph.local";
+    // Allow letters, numbers, underscore, dot, hyphen
+    const clean = (username || "").trim().toLowerCase();
+    if (!/^[a-z0-9._-]{3,20}$/.test(clean)) return null;
+    return `${clean}@gbph.app`; // safe "email-like" domain
   }
 
   function emailToUsername(email) {
     if (!email) return "";
-    var at = email.indexOf("@");
-    if (at === -1) return email;
-    return email.slice(0, at);
+    const at = email.indexOf("@");
+    return at === -1 ? email : email.slice(0, at);
   }
 
-  function injectModal() {
-    if (document.getElementById("authModal")) return;
+  async function submit() {
+    setMessage("");
 
-    var overlay = document.createElement("div");
-    overlay.id = "authOverlay";
-    overlay.className = "authOverlay";
-    overlay.style.display = "none";
+    const usernameRaw = document.getElementById("gbUsername").value;
+    const password = document.getElementById("gbPassword").value;
 
-    var modal = document.createElement("div");
-    modal.id = "authModal";
-    modal.className = "authModal";
-    modal.style.display = "none";
-
-    var html =
-      '<div class="authHeader">' +
-        '<div>' +
-          '<div id="authTitle" class="authTitle">Login</div>' +
-          '<div class="authTabs">' +
-            '<button id="authTabLogin" class="authTab active" type="button">Login</button>' +
-            '<button id="authTabSignup" class="authTab" type="button">Sign up</button>' +
-          '</div>' +
-        '</div>' +
-        '<button id="authClose" class="authClose" type="button">✕</button>' +
-      '</div>' +
-      '<div class="authBody">' +
-        '<label class="authLabel">Username</label>' +
-        '<input id="authUsername" class="authInput" placeholder="e.g. juan" />' +
-        '<label class="authLabel">Password</label>' +
-        '<input id="authPassword" class="authInput" type="password" placeholder="••••••••" />' +
-        '<button id="authSubmit" class="authSubmit" type="button">Login</button>' +
-        '<div id="authMsg" class="authMsg"></div>' +
-      '</div>';
-
-    modal.innerHTML = html;
-
-    document.body.appendChild(overlay);
-    document.body.appendChild(modal);
-
-    overlay.onclick = function(){ showModal(false); };
-
-    var closeBtn = document.getElementById("authClose");
-    if (closeBtn) closeBtn.onclick = function(){ showModal(false); };
-
-    var tabLogin = document.getElementById("authTabLogin");
-    var tabSignup = document.getElementById("authTabSignup");
-    if (tabLogin) tabLogin.onclick = function(){ setMode("login"); };
-    if (tabSignup) tabSignup.onclick = function(){ setMode("signup"); };
-
-    var submitBtn = document.getElementById("authSubmit");
-    if (submitBtn) submitBtn.onclick = submitAuth;
-
-    var pass = document.getElementById("authPassword");
-    if (pass) {
-      pass.addEventListener("keydown", function(e){
-        if (e.key === "Enter") submitAuth();
-      });
+    if (!usernameRaw || !password) {
+      setMessage("Please enter username and password.");
+      return;
     }
+
+    const email = usernameToEmail(usernameRaw);
+    if (!email) {
+      setMessage("Username must be 3–20 characters: letters, numbers, . _ -");
+      return;
+    }
+
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+      // If email confirmations are OFF, user may already be logged in.
+      // Either way, we move to login mode for clarity.
+      setMessage("Account created. You can login now.");
+      mode = "login";
+      setModeUI();
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    await refresh();
+    close();
   }
 
-  function injectStyles() {
-    if (document.getElementById("authUiStyles")) return;
-    var s = document.createElement("style");
-    s.id = "authUiStyles";
-    s.textContent =
-      ".profileBtn{padding:10px 12px;border-radius:12px;border:1px solid #ddd;background:#fff;font-size:14px;cursor:pointer}" +
-      ".profileWrap{position:relative;display:inline-block}" +
-      ".profileMenu{position:absolute;right:0;margin-top:8px;width:160px;border:1px solid #eee;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);overflow:hidden;z-index:50}" +
-      ".menuItem{width:100%;text-align:left;padding:10px 12px;background:#fff;border:none;cursor:pointer;font-size:14px}" +
-      ".menuItem:hover{background:#f6f6f6}" +
-      ".authOverlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100}" +
-      ".authModal{position:fixed;left:50%;top:12vh;transform:translateX(-50%);width:min(520px,calc(100% - 24px));background:#fff;border-radius:16px;border:1px solid #eee;z-index:101;padding:14px}" +
-      ".authHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}" +
-      ".authTitle{font-weight:700;font-size:18px;margin-bottom:6px}" +
-      ".authTabs{display:flex;gap:8px;flex-wrap:wrap}" +
-      ".authTab{padding:8px 10px;border-radius:999px;border:1px solid #ddd;background:#fff;font-size:13px;cursor:pointer}" +
-      ".authTab.active{border-color:#111}" +
-      ".authClose{border:1px solid #ddd;background:#fff;border-radius:12px;width:40px;height:40px;cursor:pointer;font-size:16px}" +
-      ".authBody{margin-top:12px;display:grid;gap:10px}" +
-      ".authLabel{font-size:12px;color:#555}" +
-      ".authInput{width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;font-size:16px}" +
-      ".authSubmit{width:100%;padding:12px;border-radius:12px;border:none;background:#111;color:#fff;cursor:pointer;font-size:16px}" +
-      ".authMsg{font-size:12px;color:#444;min-height:16px}";
-    document.head.appendChild(s);
+  // expose requireAuth-like helper
+  async function requireLogin() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) return user;
+    open("login");
+    return null;
   }
 
-  return {
-    refresh: refresh,
-    openAuth: openAuth,
-    ensureAuthed: ensureAuthed
-  };
+  // Wire up modal events
+  function bind() {
+    document.getElementById("gbAuthOverlay").onclick = close;
+    document.getElementById("gbClose").onclick = close;
+
+    document.getElementById("gbTabLogin").onclick = () => { mode = "login"; setModeUI(); };
+    document.getElementById("gbTabSignup").onclick = () => { mode = "signup"; setModeUI(); };
+
+    document.getElementById("gbSubmit").onclick = submit;
+
+    document.getElementById("gbPassword").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submit();
+    });
+  }
+
+  bind();
+
+  return { refresh, open, close, requireLogin };
 }
 
+// Keep backward compatibility with your other scripts
 export async function requireAuth(supabase, authUI) {
-  var res = await supabase.auth.getUser();
-  var user = res && res.data ? res.data.user : null;
-  if (user) return user;
-  if (authUI && authUI.openAuth) authUI.openAuth("login");
-  return null;
+  if (!authUI || !authUI.requireLogin) {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user || null;
+  }
+  return await authUI.requireLogin();
+}
+
+function injectAuthModal() {
+  if (document.getElementById("gbAuthModal")) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "gbAuthOverlay";
+  overlay.className = "gb-overlay";
+  overlay.style.display = "none";
+
+  const modal = document.createElement("div");
+  modal.id = "gbAuthModal";
+  modal.className = "gb-modal";
+  modal.style.display = "none";
+
+  modal.innerHTML = `
+    <div class="gb-card">
+      <div class="gb-card-head">
+        <div>
+          <div id="gbAuthTitle" class="gb-title">Login</div>
+          <div class="gb-tabs">
+            <button id="gbTabLogin" class="gb-tab active" type="button">Login</button>
+            <button id="gbTabSignup" class="gb-tab" type="button">Sign up</button>
+          </div>
+        </div>
+        <button id="gbClose" class="gb-x" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="gb-body">
+        <label class="gb-label">Username</label>
+        <input id="gbUsername" class="gb-input" placeholder="e.g. juan" autocomplete="username" />
+        <label class="gb-label">Password</label>
+        <input id="gbPassword" class="gb-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+        <button id="gbSubmit" class="gb-btn gb-btn-primary" type="button">Login</button>
+        <div id="gbAuthMsg" class="gb-msg"></div>
+        <div class="gb-hint">Username is only for this site.</div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(modal);
+}
+
+function injectAuthStyles() {
+  if (document.getElementById("gbAuthStyles")) return;
+  const s = document.createElement("style");
+  s.id = "gbAuthStyles";
+  s.textContent = `
+    .gb-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:999; }
+    .gb-modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:16px; z-index:1000; }
+    .gb-card{ width:min(520px, 100%); background:#fff; border-radius:18px; border:1px solid #eee; box-shadow:0 20px 60px rgba(0,0,0,.18); padding:14px; }
+    .gb-card-head{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .gb-title{ font-size:20px; font-weight:800; margin-bottom:8px; }
+    .gb-tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+    .gb-tab{ padding:8px 12px; border-radius:999px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:13px; }
+    .gb-tab.active{ border-color:#111; }
+    .gb-x{ width:40px; height:40px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:16px; }
+    .gb-body{ margin-top:12px; display:grid; gap:10px; }
+    .gb-label{ font-size:12px; color:#555; }
+    .gb-input{ width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:16px; }
+    .gb-btn{ padding:12px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer; font-size:16px; }
+    .gb-btn-primary{ border:none; background:#111; color:#fff; }
+    .gb-msg{ font-size:12px; color:#b00020; min-height:16px; }
+    .gb-hint{ font-size:12px; color:#777; }
+    .gb-profile{ position:relative; display:inline-block; }
+    .gb-menu{ position:absolute; right:0; top:calc(100% + 8px); width:160px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08); overflow:hidden; z-index:50; }
+    .gb-menu-item{ width:100%; text-align:left; padding:10px 12px; border:none; background:#fff; cursor:pointer; font-size:14px; }
+    .gb-menu-item:hover{ background:#f6f6f6; }
+    .gb-btn-ghost{ background:#fff; }
+  `;
+  document.head.appendChild(s);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
 }
