@@ -236,86 +236,77 @@ function injectAuthStyles() {
   const s = document.createElement("style");
   s.id = "gbAuthStyles";
   s.textContent = `
-  /* Overlay + center */
-  .gb-overlay{
-    position:fixed; inset:0;
-    background:rgba(0,0,0,.45);
-    z-index:9999;
-  }
-  .gb-modal{
-    position:fixed; inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:16px;
-    z-index:10000;
+  /* Always center modal (override site CSS) */
+  #gbAuthOverlay.gb-overlay{
+    position:fixed !important;
+    inset:0 !important;
+    background:rgba(0,0,0,.45) !important;
+    z-index:9999 !important;
   }
 
-  /* Card */
-  .gb-card{
-    width:min(520px, 100%);
-    max-height:calc(100vh - 32px);
-    overflow:auto;
-    background:#fff;
-    border-radius:18px;
-    border:1px solid #eee;
-    box-shadow:0 20px 60px rgba(0,0,0,.18);
-    padding:16px;
+  #gbAuthModal.gb-modal{
+    position:fixed !important;
+    inset:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:16px !important;
+    z-index:10000 !important;
   }
 
-  .gb-card-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    gap:12px;
-  }
-  .gb-title{
-    font-size:20px;
-    font-weight:800;
-    margin:0 0 8px 0;
-    line-height:1.2;
+  #gbAuthModal .gb-card{
+    width:min(520px, 100%) !important;
+    max-height:calc(100vh - 32px) !important;
+    overflow:auto !important;
+    background:#fff !important;
+    border-radius:18px !important;
+    border:1px solid #eee !important;
+    box-shadow:0 20px 60px rgba(0,0,0,.18) !important;
+    padding:16px !important;
   }
 
-  /* Tabs */
-  .gb-tabs{ display:flex; gap:8px; flex-wrap:wrap; }
-  .gb-tab{
-    padding:8px 12px;
-    border-radius:999px;
-    border:1px solid #ddd;
-    background:#fff;
-    cursor:pointer;
-    font-size:13px;
-    line-height:1;
-  }
-  .gb-tab.active{ border-color:#111; }
-
-  /* Close button */
-  .gb-x{
-    width:42px; height:42px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    background:#fff;
-    cursor:pointer;
-    font-size:16px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+  #gbAuthModal .gb-card-head{
+    display:flex !important;
+    justify-content:space-between !important;
+    align-items:flex-start !important;
+    gap:12px !important;
   }
 
-  /* Body spacing */
-  .gb-body{
-    margin-top:14px;
-    display:grid;
-    gap:10px;
-  }
-  .gb-label{
-    font-size:12px;
-    color:#555;
-    margin-top:2px;
+  #gbAuthModal .gb-title{
+    font-size:20px !important;
+    font-weight:800 !important;
+    margin:0 0 8px 0 !important;
+    line-height:1.2 !important;
   }
 
-  /* Inputs - stop site CSS from breaking them */
-  .gb-input{
+  #gbAuthModal .gb-tabs{ display:flex !important; gap:8px !important; flex-wrap:wrap !important; }
+  #gbAuthModal .gb-tab{
+    padding:8px 12px !important;
+    border-radius:999px !important;
+    border:1px solid #ddd !important;
+    background:#fff !important;
+    cursor:pointer !important;
+    font-size:13px !important;
+    line-height:1 !important;
+  }
+  #gbAuthModal .gb-tab.active{ border-color:#111 !important; }
+
+  #gbAuthModal .gb-x{
+    width:42px !important; height:42px !important;
+    border-radius:12px !important;
+    border:1px solid #ddd !important;
+    background:#fff !important;
+    cursor:pointer !important;
+    font-size:16px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+
+  #gbAuthModal .gb-body{ margin-top:14px !important; display:grid !important; gap:10px !important; }
+  #gbAuthModal .gb-label{ font-size:12px !important; color:#555 !important; margin-top:2px !important; }
+
+  #gbAuthModal .gb-input{
     width:100% !important;
     box-sizing:border-box !important;
     padding:12px 14px !important;
@@ -326,60 +317,32 @@ function injectAuthStyles() {
     background:#fff !important;
     outline:none !important;
   }
-  .gb-input:focus{
+  #gbAuthModal .gb-input:focus{
     border-color:#111 !important;
     box-shadow:0 0 0 3px rgba(17,17,17,.10) !important;
   }
 
-  /* Buttons */
-  .gb-btn{
-    padding:12px 14px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    background:#fff;
-    cursor:pointer;
-    font-size:16px;
-  }
-  .gb-btn-primary{
-    border:none;
-    background:#111;
-    color:#fff;
-    width:100%;
-  }
-  .gb-btn-ghost{ background:#fff; }
+  #gbAuthModal .gb-btn{ padding:12px 14px !important; border-radius:12px !important; cursor:pointer !important; font-size:16px !important; }
+  #gbAuthModal .gb-btn-primary{ border:none !important; background:#111 !important; color:#fff !important; width:100% !important; }
 
-  /* Messages */
-  .gb-msg{ font-size:12px; color:#b00020; min-height:16px; }
-  .gb-hint{ font-size:12px; color:#777; }
+  #gbAuthModal .gb-msg{ font-size:12px !important; color:#b00020 !important; min-height:16px !important; }
+  #gbAuthModal .gb-hint{ font-size:12px !important; color:#777 !important; }
 
-  /* Profile dropdown */
+  /* Profile dropdown (optional) */
   .gb-profile{ position:relative; display:inline-block; }
   .gb-menu{
     position:absolute; right:0; top:calc(100% + 8px);
-    width:160px;
-    background:#fff;
-    border:1px solid #eee;
-    border-radius:12px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
-    overflow:hidden;
-    z-index:50;
+    width:160px; background:#fff; border:1px solid #eee;
+    border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08);
+    overflow:hidden; z-index:50;
   }
-  .gb-menu-item{
-    width:100%;
-    text-align:left;
-    padding:10px 12px;
-    border:none;
-    background:#fff;
-    cursor:pointer;
-    font-size:14px;
-  }
+  .gb-menu-item{ width:100%; text-align:left; padding:10px 12px; border:none; background:#fff; cursor:pointer; font-size:14px; }
   .gb-menu-item:hover{ background:#f6f6f6; }
 
-  /* Mobile tweaks */
   @media (max-width:420px){
-    .gb-card{ padding:14px; border-radius:16px; }
-    .gb-title{ font-size:18px; }
-    .gb-x{ width:40px; height:40px; }
+    #gbAuthModal .gb-card{ padding:14px !important; border-radius:16px !important; }
+    #gbAuthModal .gb-title{ font-size:18px !important; }
+    #gbAuthModal .gb-x{ width:40px !important; height:40px !important; }
   }
 `;
   }
