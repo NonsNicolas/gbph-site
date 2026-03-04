@@ -23,8 +23,14 @@ function todayISO(){
 dateEl.value = new Date().toISOString().split("T")[0];
 
 function timeToMin(t){
-  const [h,m] = t.split(":").map(Number);
+  const clean = (t || "").slice(0,5); // "HH:MM" even if "HH:MM:SS"
+  const [h,m] = clean.split(":").map(Number);
   return h*60+m;
+}
+function normalizeEnd(t){
+  const clean = (t || "").slice(0,5);
+  return clean === "00:00" ? 1440 : timeToMin(clean);
+}
 }
 function minToTime(m){
   const hh = String(Math.floor(m/60)%24).padStart(2,"0");
