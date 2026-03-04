@@ -80,14 +80,43 @@
     </section>
 
     <section class="card">
-      <div id="msg" class="small"></div>
-      <div class="gridwrap">
-        <table id="grid">
-          <thead id="thead"></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </section>
+  <h2>Login (to book)</h2>
+  <div class="row">
+    <input id="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
+  </div>
+  <div class="row">
+    <button id="btnLogin">Login</button>
+    <button id="btnSignup">Sign up</button>
+  </div>
+  <p id="authMsg" class="small"></p>
+</section>
+
+<section class="card">
+  <div id="msg" class="small"></div>
+  <div class="gridwrap">
+    <table id="grid">
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="small" style="margin-top:10px;">
+    Tap an <b>Available</b> cell to book. (₱300/hr, pay on-site)
+  </p>
+</section>
+
+<!-- Booking popup -->
+<div id="popup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); padding:18px;">
+  <div style="max-width:520px; margin:10vh auto; background:#fff; border-radius:16px; border:1px solid #eee; padding:16px;">
+    <h3 style="margin:0 0 10px 0;">Confirm booking</h3>
+    <div id="popupInfo" class="small" style="margin-bottom:10px;"></div>
+    <div class="row">
+      <button id="btnConfirm">Confirm</button>
+      <button id="btnCancel" style="background:#fff; color:#111; border:1px solid #ddd;">Cancel</button>
+    </div>
+    <p id="popupMsg" class="small" style="margin-top:10px;"></p>
+  </div>
+</div>
   </main>
 
   <script type="module" src="./calendar.js"></script>
