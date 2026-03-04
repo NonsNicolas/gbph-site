@@ -1,7 +1,10 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { initAuthUI, requireAuth } from "./auth-ui.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const authUI = initAuthUI(supabase);
+await authUI.refresh();
 
 const $ = (id) => document.getElementById(id);
 
@@ -273,11 +276,8 @@ function closePopup() {
 }
 
 async function confirmBooking() {
-  popupMsg.textContent = "";
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    popupMsg.textContent = "Please login first.";
-    return;
+ const user = await requireAuth(supabase, authUI);
+if (!user) return;
   }
   if (!pending) {
     popupMsg.textContent = "No booking selected.";
