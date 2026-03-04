@@ -20,14 +20,20 @@ export function initAuthUI(supabase) {
     }
 
     const username = emailToUsername(user.email || "");
-    profileArea.innerHTML = `
-      <div class="gb-profile">
-        <button id="gbProfileBtn" class="gb-btn gb-btn-ghost">${escapeHtml(username || "Profile")}</button>
-        <div id="gbProfileMenu" class="gb-menu" style="display:none;">
-          <button id="gbLogoutBtn" class="gb-menu-item">Log out</button>
-        </div>
-      </div>
-    `;
+   profileArea.innerHTML = `
+  <div class="gb-profile">
+    <button id="gbProfileBtn" class="gb-btn gb-btn-ghost">${escapeHtml(username || "Profile")}</button>
+    <div id="gbProfileMenu" class="gb-menu" style="display:none;">
+      <a href="./my.html" id="gbMyResLink" class="gb-menu-item gb-menu-link">My Reservations</a>
+      <button id="gbLogoutBtn" class="gb-menu-item" type="button">Log out</button>
+    </div>
+  </div>
+`;
+    .gb-menu-link{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+}
 
     const btn = document.getElementById("gbProfileBtn");
     const menu = document.getElementById("gbProfileMenu");
