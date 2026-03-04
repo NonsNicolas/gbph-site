@@ -1,5 +1,4 @@
 // auth-ui.js — Username-only UI (uses Supabase email auth underneath)
-//
 // Username entered -> email generated: <username>@gbph.app
 // (Users never see email; they only use username + password)
 
@@ -13,44 +12,47 @@ export function initAuthUI(supabase) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Logged out
     if (!user) {
       profileArea.innerHTML = `<button id="btnOpenAuth" class="gb-btn gb-btn-ghost">Login</button>`;
-      document.getElementById("btnOpenAuth").onclick = () => open("login");
+      const b = document.getElementById("btnOpenAuth");
+      if (b) b.onclick = () => open("login");
       return;
     }
 
+    // Logged in (dropdown)
     const username = emailToUsername(user.email || "");
-   profileArea.innerHTML = `
-  <div class="gb-profile">
-    <button id="gbProfileBtn" class="gb-btn gb-btn-ghost">${escapeHtml(username || "Profile")}</button>
-    <div id="gbProfileMenu" class="gb-menu" style="display:none;">
-      <a href="./my.html" id="gbMyResLink" class="gb-menu-item gb-menu-link">My Reservations</a>
-      <button id="gbLogoutBtn" class="gb-menu-item" type="button">Log out</button>
-    </div>
-  </div>
-`;
-    .gb-menu-link{
-  display:block;
-  text-decoration:none;
-  color:inherit;
-}
+    profileArea.innerHTML = `
+      <div class="gb-profile">
+        <button id="gbProfileBtn" class="gb-btn gb-btn-ghost">${escapeHtml(username || "Profile")}</button>
+        <div id="gbProfileMenu" class="gb-menu" style="display:none;">
+          <a href="./my.html" id="gbMyResLink" class="gb-menu-item gb-menu-link">My Reservations</a>
+          <button id="gbLogoutBtn" class="gb-menu-item" type="button">Log out</button>
+        </div>
+      </div>
+    `;
 
     const btn = document.getElementById("gbProfileBtn");
     const menu = document.getElementById("gbProfileMenu");
 
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      menu.style.display = (menu.style.display === "none") ? "block" : "none";
-    });
+    if (btn && menu) {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        menu.style.display = (menu.style.display === "none") ? "block" : "none";
+      });
 
-    document.addEventListener("click", () => {
-      if (menu) menu.style.display = "none";
-    });
+      document.addEventListener("click", () => {
+        menu.style.display = "none";
+      });
+    }
 
-    document.getElementById("gbLogoutBtn").onclick = async () => {
-      await supabase.auth.signOut();
-      await refresh();
-    };
+    const logoutBtn = document.getElementById("gbLogoutBtn");
+    if (logoutBtn) {
+      logoutBtn.onclick = async () => {
+        await supabase.auth.signOut();
+        await refresh();
+      };
+    }
   }
 
   // ===== Modal control =====
@@ -63,7 +65,10 @@ export function initAuthUI(supabase) {
     const overlay = document.getElementById("gbAuthOverlay");
     const modal = document.getElementById("gbAuthModal");
     overlay.style.display = "block";
-    modal.style.display = "block";
+    modal.style.display = "flex";
+
+    // lock background scroll (mobile friendly)
+    document.body.style.overflow = "hidden";
 
     setTimeout(() => document.getElementById("gbUsername")?.focus(), 50);
   }
@@ -72,24 +77,27 @@ export function initAuthUI(supabase) {
     document.getElementById("gbAuthOverlay").style.display = "none";
     document.getElementById("gbAuthModal").style.display = "none";
     setMessage("");
+
+    // unlock scroll
+    document.body.style.overflow = "";
   }
 
   function setModeUI() {
     const title = document.getElementById("gbAuthTitle");
     const tabLogin = document.getElementById("gbTabLogin");
     const tabSignup = document.getElementById("gbTabSignup");
-    const submit = document.getElementById("gbSubmit");
+    const submitBtn = document.getElementById("gbSubmit");
 
     if (mode === "signup") {
       title.textContent = "Create account";
       tabSignup.classList.add("active");
       tabLogin.classList.remove("active");
-      submit.textContent = "Sign up";
+      submitBtn.textContent = "Sign up";
     } else {
       title.textContent = "Login";
       tabLogin.classList.add("active");
       tabSignup.classList.remove("active");
-      submit.textContent = "Login";
+      submitBtn.textContent = "Login";
     }
     setMessage("");
   }
@@ -100,10 +108,9 @@ export function initAuthUI(supabase) {
   }
 
   function usernameToEmail(username) {
-    // Allow letters, numbers, underscore, dot, hyphen
     const clean = (username || "").trim().toLowerCase();
     if (!/^[a-z0-9._-]{3,20}$/.test(clean)) return null;
-    return `${clean}@gbph.app`; // safe "email-like" domain
+    return `${clean}@gbph.app`;
   }
 
   function emailToUsername(email) {
@@ -140,8 +147,6 @@ export function initAuthUI(supabase) {
         setMessage(error.message);
         return;
       }
-      // If email confirmations are OFF, user may already be logged in.
-      // Either way, we move to login mode for clarity.
       setMessage("Account created. You can login now.");
       mode = "login";
       setModeUI();
@@ -158,7 +163,6 @@ export function initAuthUI(supabase) {
     close();
   }
 
-  // expose requireAuth-like helper
   async function requireLogin() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) return user;
@@ -166,7 +170,6 @@ export function initAuthUI(supabase) {
     return null;
   }
 
-  // Wire up modal events
   function bind() {
     document.getElementById("gbAuthOverlay").onclick = close;
     document.getElementById("gbClose").onclick = close;
@@ -183,10 +186,10 @@ export function initAuthUI(supabase) {
 
   bind();
 
-  return { refresh, open, close, requireLogin };
+  // openAuth alias for old code compatibility
+  return { refresh, open, openAuth: open, close, requireLogin };
 }
 
-// Keep backward compatibility with your other scripts
 export async function requireAuth(supabase, authUI) {
   if (!authUI || !authUI.requireLogin) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -239,119 +242,147 @@ function injectAuthModal() {
 
 function injectAuthStyles() {
   if (document.getElementById("gbAuthStyles")) return;
+
   const s = document.createElement("style");
   s.id = "gbAuthStyles";
   s.textContent = `
-  /* Always center modal (override site CSS) */
-  #gbAuthOverlay.gb-overlay{
-    position:fixed !important;
-    inset:0 !important;
-    background:rgba(0,0,0,.45) !important;
-    z-index:9999 !important;
-  }
+    /* Overlay + centered modal (strong overrides) */
+    #gbAuthOverlay.gb-overlay{
+      position:fixed !important;
+      inset:0 !important;
+      background:rgba(0,0,0,.45) !important;
+      z-index:9999 !important;
+    }
 
-  #gbAuthModal.gb-modal{
-    position:fixed !important;
-    inset:0 !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    padding:16px !important;
-    z-index:10000 !important;
-  }
+    #gbAuthModal.gb-modal{
+      position:fixed !important;
+      inset:0 !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      padding:16px !important;
+      z-index:10000 !important;
+    }
 
-  #gbAuthModal .gb-card{
-    width:min(520px, 100%) !important;
-    max-height:calc(100vh - 32px) !important;
-    overflow:auto !important;
-    background:#fff !important;
-    border-radius:18px !important;
-    border:1px solid #eee !important;
-    box-shadow:0 20px 60px rgba(0,0,0,.18) !important;
-    padding:16px !important;
-  }
+    #gbAuthModal .gb-card{
+      width:min(520px, 100%) !important;
+      max-height:calc(100vh - 32px) !important;
+      overflow:auto !important;
+      background:#fff !important;
+      border-radius:18px !important;
+      border:1px solid #eee !important;
+      box-shadow:0 20px 60px rgba(0,0,0,.18) !important;
+      padding:16px !important;
+    }
 
-  #gbAuthModal .gb-card-head{
-    display:flex !important;
-    justify-content:space-between !important;
-    align-items:flex-start !important;
-    gap:12px !important;
-  }
+    #gbAuthModal .gb-card-head{
+      display:flex !important;
+      justify-content:space-between !important;
+      align-items:flex-start !important;
+      gap:12px !important;
+    }
 
-  #gbAuthModal .gb-title{
-    font-size:20px !important;
-    font-weight:800 !important;
-    margin:0 0 8px 0 !important;
-    line-height:1.2 !important;
-  }
+    #gbAuthModal .gb-title{
+      font-size:20px !important;
+      font-weight:800 !important;
+      margin:0 0 8px 0 !important;
+      line-height:1.2 !important;
+    }
 
-  #gbAuthModal .gb-tabs{ display:flex !important; gap:8px !important; flex-wrap:wrap !important; }
-  #gbAuthModal .gb-tab{
-    padding:8px 12px !important;
-    border-radius:999px !important;
-    border:1px solid #ddd !important;
-    background:#fff !important;
-    cursor:pointer !important;
-    font-size:13px !important;
-    line-height:1 !important;
-  }
-  #gbAuthModal .gb-tab.active{ border-color:#111 !important; }
+    #gbAuthModal .gb-tabs{ display:flex !important; gap:8px !important; flex-wrap:wrap !important; }
+    #gbAuthModal .gb-tab{
+      padding:8px 12px !important;
+      border-radius:999px !important;
+      border:1px solid #ddd !important;
+      background:#fff !important;
+      cursor:pointer !important;
+      font-size:13px !important;
+      line-height:1 !important;
+    }
+    #gbAuthModal .gb-tab.active{ border-color:#111 !important; }
 
-  #gbAuthModal .gb-x{
-    width:42px !important; height:42px !important;
-    border-radius:12px !important;
-    border:1px solid #ddd !important;
-    background:#fff !important;
-    cursor:pointer !important;
-    font-size:16px !important;
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-  }
+    #gbAuthModal .gb-x{
+      width:42px !important; height:42px !important;
+      border-radius:12px !important;
+      border:1px solid #ddd !important;
+      background:#fff !important;
+      cursor:pointer !important;
+      font-size:16px !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+    }
 
-  #gbAuthModal .gb-body{ margin-top:14px !important; display:grid !important; gap:10px !important; }
-  #gbAuthModal .gb-label{ font-size:12px !important; color:#555 !important; margin-top:2px !important; }
+    #gbAuthModal .gb-body{ margin-top:14px !important; display:grid !important; gap:10px !important; }
+    #gbAuthModal .gb-label{ font-size:12px !important; color:#555 !important; margin-top:2px !important; }
 
-  #gbAuthModal .gb-input{
-    width:100% !important;
-    box-sizing:border-box !important;
-    padding:12px 14px !important;
-    border-radius:12px !important;
-    border:1px solid #ddd !important;
-    font-size:16px !important;
-    line-height:1.2 !important;
-    background:#fff !important;
-    outline:none !important;
-  }
-  #gbAuthModal .gb-input:focus{
-    border-color:#111 !important;
-    box-shadow:0 0 0 3px rgba(17,17,17,.10) !important;
-  }
+    #gbAuthModal .gb-input{
+      width:100% !important;
+      box-sizing:border-box !important;
+      padding:12px 14px !important;
+      border-radius:12px !important;
+      border:1px solid #ddd !important;
+      font-size:16px !important;
+      line-height:1.2 !important;
+      background:#fff !important;
+      outline:none !important;
+    }
+    #gbAuthModal .gb-input:focus{
+      border-color:#111 !important;
+      box-shadow:0 0 0 3px rgba(17,17,17,.10) !important;
+    }
 
-  #gbAuthModal .gb-btn{ padding:12px 14px !important; border-radius:12px !important; cursor:pointer !important; font-size:16px !important; }
-  #gbAuthModal .gb-btn-primary{ border:none !important; background:#111 !important; color:#fff !important; width:100% !important; }
+    #gbAuthModal .gb-btn{
+      padding:12px 14px !important;
+      border-radius:12px !important;
+      cursor:pointer !important;
+      font-size:16px !important;
+    }
+    #gbAuthModal .gb-btn-primary{
+      border:none !important;
+      background:#111 !important;
+      color:#fff !important;
+      width:100% !important;
+    }
 
-  #gbAuthModal .gb-msg{ font-size:12px !important; color:#b00020 !important; min-height:16px !important; }
-  #gbAuthModal .gb-hint{ font-size:12px !important; color:#777 !important; }
+    #gbAuthModal .gb-msg{ font-size:12px !important; color:#b00020 !important; min-height:16px !important; }
+    #gbAuthModal .gb-hint{ font-size:12px !important; color:#777 !important; }
 
-  /* Profile dropdown (optional) */
-  .gb-profile{ position:relative; display:inline-block; }
-  .gb-menu{
-    position:absolute; right:0; top:calc(100% + 8px);
-    width:160px; background:#fff; border:1px solid #eee;
-    border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08);
-    overflow:hidden; z-index:50;
-  }
-  .gb-menu-item{ width:100%; text-align:left; padding:10px 12px; border:none; background:#fff; cursor:pointer; font-size:14px; }
-  .gb-menu-item:hover{ background:#f6f6f6; }
+    /* Profile dropdown */
+    .gb-profile{ position:relative; display:inline-block; }
+    .gb-menu{
+      position:absolute; right:0; top:calc(100% + 8px);
+      width:180px; background:#fff; border:1px solid #eee;
+      border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.08);
+      overflow:hidden; z-index:50;
+    }
+    .gb-menu-item{
+      width:100%;
+      text-align:left;
+      padding:10px 12px;
+      border:none;
+      background:#fff;
+      cursor:pointer;
+      font-size:14px;
+      display:block;
+    }
+    .gb-menu-item:hover{ background:#f6f6f6; }
 
-  @media (max-width:420px){
-    #gbAuthModal .gb-card{ padding:14px !important; border-radius:16px !important; }
-    #gbAuthModal .gb-title{ font-size:18px !important; }
-    #gbAuthModal .gb-x{ width:40px !important; height:40px !important; }
-  }
-`;
-  }
+    /* Make <a> look like menu item */
+    .gb-menu-link{
+      text-decoration:none;
+      color:inherit;
+    }
+
+    @media (max-width:420px){
+      #gbAuthModal .gb-card{ padding:14px !important; border-radius:16px !important; }
+      #gbAuthModal .gb-title{ font-size:18px !important; }
+      #gbAuthModal .gb-x{ width:40px !important; height:40px !important; }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
