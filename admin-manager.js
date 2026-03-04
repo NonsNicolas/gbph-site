@@ -48,7 +48,7 @@ async function refresh(){
   const court = courtEl.value;
 
   let q = supabase
-    .from("reservations")
+    .from("public reservations")
     .select("id,user_id,court_id,date,start_time,end_time,total_fee_php,status")
     .eq("date", date)
     .order("start_time", { ascending: true });
