@@ -89,7 +89,9 @@ async function loadAvailability() {
     supabase.from("operating_hours").select("*").eq("day_of_week", day).single(),
     supabase.from("event_blocks").select("*").eq("day_of_week", day).eq("active", true),
     supabase.from("blocked_slots").select("court_id,start_time,end_time,reason").eq("date", date),
-    supabase.from("public reservations").select("court_id,start_time,end_time,status").eq("date", date).eq("status", "confirmed"),
+    supabase.from("public_reservations")
+  .select("court_id,start_time,end_time")
+  .eq("date", date);
   ]);
 
   if (hoursRes.error) throw hoursRes.error;
