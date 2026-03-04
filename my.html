@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Bookings • GBPH</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>My Bookings</h1>
+    <nav class="nav" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <a href="./index.html">Home</a>
+      <a href="./calendar.html">Daily Schedule</a>
+      <a href="./month.html">Monthly</a>
+      <a href="./my.html">My Bookings</a>
+      <a href="./admin-manager.html">Admin</a>
+      <span style="flex:1"></span>
+      <div id="profileArea"></div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div id="msg" class="small"></div>
+      <div id="list" style="display:grid;gap:10px;"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./my.js"></script>
+</body>
+</html>
