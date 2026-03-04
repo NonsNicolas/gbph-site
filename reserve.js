@@ -1,14 +1,11 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-import { initHeaderAuth } from "./app-init.js";
-await initHeaderAuth();
+import { initAuthUI, requireAuth } from "./auth-ui.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const authUI = initAuthUI(supabase);
-await authUI.refresh();
 
+// DOM
 const $ = (id) => document.getElementById(id);
-
 const dateEl = $("date");
 const courtEl = $("court");
 const slotsEl = $("slots");
@@ -16,13 +13,24 @@ const selectedEl = $("selected");
 const msgEl = $("msg");
 const btnBook = $("btnBook");
 
+// date default
 dateEl.value = new Date().toISOString().slice(0, 10);
 
+// auth UI (don’t let it crash the page)
+let authUI = null;
+try {
+  authUI = initAuthUI(supabase);
+  await authUI.refresh();
+} catch (e) {
+  console.error("Auth UI failed:", e);
+  // Reserve should still work without auth dropdown
+}
+
+// helpers
 let selectedStart = null;
-let selectedEnd = null;
 
 function timeToMin(t) {
-  const clean = (t || "").slice(0, 5); // handles "HH:MM:SS"
+  const clean = (t || "").slice(0, 5);
   const [h, m] = clean.split(":").map(Number);
   return h * 60 + m;
 }
@@ -39,55 +47,33 @@ function overlaps(aS, aE, bS, bE) {
   return aS < bE && aE > bS;
 }
 
+function showError(err) {
+  const msg = err?.message || String(err);
+  msgEl.textContent = msg;
+}
+
+// load courts
 async function loadCourts() {
+  msgEl.textContent = "";
   const { data, error } = await supabase
     .from("courts")
     .select("id,court_number,is_active")
     .order("court_number");
 
-  if (error) {
-    msgEl.textContent = error.message;
-    return;
-  }
+  if (error) throw error;
 
   const active = (data || []).filter((c) => c.is_active);
   courtEl.innerHTML = active
     .map((c) => `<option value="${c.id}">Court ${c.court_number}</option>`)
     .join("");
+
+  if (!active.length) msgEl.textContent = "No active courts found in Supabase.";
 }
 
-function renderSlots(slotButtons) {
-  slotsEl.innerHTML = slotButtons
-    .map((s) => {
-      const label = s.label ? s.label : `${s.start} – ${s.end}`;
-      const disabledAttr = s.disabled ? "disabled" : "";
-      const extra = s.label ? " blocked" : "";
-      return `
-        <button class="slot${extra}" ${disabledAttr}
-          data-start="${s.start}" data-end="${s.end}">
-          <div><b>${s.start}</b></div>
-          <div class="small">${s.label ? s.label : s.end}</div>
-        </button>
-      `;
-    })
-    .join("");
-
-  slotsEl.querySelectorAll("button.slot:not([disabled])").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      slotsEl.querySelectorAll(".slot").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      selectedStart = btn.dataset.start;
-      selectedEnd = btn.dataset.end;
-      selectedEl.textContent = `Selected: ${selectedStart} – ${selectedEnd}`;
-      msgEl.textContent = "";
-    });
-  });
-}
-
+// load availability
 async function loadAvailability() {
   msgEl.textContent = "";
   selectedStart = null;
-  selectedEnd = null;
   selectedEl.textContent = "";
 
   const date = dateEl.value;
@@ -100,13 +86,13 @@ async function loadAvailability() {
     supabase.from("operating_hours").select("*").eq("day_of_week", day).single(),
     supabase.from("event_blocks").select("*").eq("day_of_week", day).eq("active", true),
     supabase.from("blocked_slots").select("court_id,start_time,end_time,reason").eq("date", date),
-    supabase.from("reservations").select("court_id,start_time,end_time").eq("date", date).eq("status", "confirmed"),
+    supabase.from("reservations").select("court_id,start_time,end_time,status").eq("date", date).eq("status", "confirmed"),
   ]);
 
-  if (hoursRes.error) {
-    msgEl.textContent = hoursRes.error.message;
-    return;
-  }
+  if (hoursRes.error) throw hoursRes.error;
+  if (eventsRes.error) throw eventsRes.error;
+  if (blocksRes.error) throw blocksRes.error;
+  if (resvRes.error) throw resvRes.error;
 
   const hours = hoursRes.data;
   if (!hours || hours.is_closed) {
@@ -121,7 +107,7 @@ async function loadAvailability() {
   const blocks = blocksRes.data || [];
   const resv = resvRes.data || [];
 
-  const slotButtons = [];
+  const slots = [];
 
   for (let t = openM; t + 60 <= closeM; t += 60) {
     const start = minToTime(t);
@@ -141,7 +127,7 @@ async function loadAvailability() {
       }
     }
 
-    // Admin blocks (this court or all)
+    // Admin blocks (court-specific or all)
     if (!disabled) {
       for (const b of blocks) {
         if (b.court_id !== null && Number(b.court_id) !== courtId) continue;
@@ -155,7 +141,7 @@ async function loadAvailability() {
       }
     }
 
-    // Existing reservations (this court)
+    // Reservations
     if (!disabled) {
       for (const r of resv) {
         if (Number(r.court_id) !== courtId) continue;
@@ -169,50 +155,62 @@ async function loadAvailability() {
       }
     }
 
-    slotButtons.push({ start, end, disabled, label });
+    slots.push({ start, end, disabled, label });
   }
 
-  renderSlots(slotButtons);
+  slotsEl.innerHTML = slots.map(s => `
+    <button class="slot ${s.disabled ? "blocked" : ""}" ${s.disabled ? "disabled" : ""} data-start="${s.start}">
+      <div><b>${s.start}</b></div>
+      <div class="small">${s.label ? s.label : (s.end + " • ₱300")}</div>
+    </button>
+  `).join("");
+
+  slotsEl.querySelectorAll("button.slot:not([disabled])").forEach(btn => {
+    btn.addEventListener("click", () => {
+      slotsEl.querySelectorAll(".slot").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      selectedStart = btn.dataset.start;
+      selectedEl.textContent = `Selected: ${selectedStart}`;
+    });
+  });
 }
 
 async function book() {
   msgEl.textContent = "";
-
   if (!selectedStart) {
     msgEl.textContent = "Select a time slot first.";
     return;
   }
 
+  // Require login (opens username modal if not logged in)
   const user = await requireAuth(supabase, authUI);
   if (!user) return;
 
-  const date = dateEl.value;
-  const courtId = Number(courtEl.value);
-
   const { data, error } = await supabase.rpc("create_reservation", {
-    p_date: date,
-    p_court_id: courtId,
+    p_date: dateEl.value,
+    p_court_id: Number(courtEl.value),
     p_start_time: selectedStart,
   });
 
-  if (error) {
-    msgEl.textContent = error.message;
-    return;
-  }
-  if (!data?.ok) {
-    msgEl.textContent = data?.error || "Booking failed";
-    return;
-  }
+  if (error) { msgEl.textContent = error.message; return; }
+  if (!data?.ok) { msgEl.textContent = data?.error || "Booking failed"; return; }
 
   msgEl.textContent = "Booked! ✅";
   await loadAvailability();
 }
 
-// Events
+// events
 btnBook.addEventListener("click", book);
-dateEl.addEventListener("change", loadAvailability);
-courtEl.addEventListener("change", loadAvailability);
+dateEl.addEventListener("change", () => loadAvailability().catch(showError));
+courtEl.addEventListener("change", () => loadAvailability().catch(showError));
 
-// Init
-await loadCourts();
-await loadAvailability();
+// init
+(async function init() {
+  try {
+    await loadCourts();
+    await loadAvailability();
+  } catch (e) {
+    console.error(e);
+    showError(e);
+  }
+})();
