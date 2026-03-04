@@ -1,4 +1,6 @@
 // auth-ui.js (safe version: no backticks/template literals)
+import { initHeaderAuth } from "./app-init.js";
+await initHeaderAuth();
 
 export function initAuthUI(supabase) {
   ensureProfileArea();
