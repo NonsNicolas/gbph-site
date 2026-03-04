@@ -25,7 +25,7 @@ async function loadMine(){
 
   // RLS: user can read own reservations
   const { data, error } = await supabase
-    .from("reservations")
+    .from("public reservations")
     .select("id,date,start_time,end_time,total_fee_php,status,court_id")
     .order("date", { ascending: false })
     .order("start_time", { ascending: false });
