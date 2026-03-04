@@ -29,8 +29,10 @@ function todayISO() {
 dateEl.value = todayISO();
 
 function timeToMin(t) {
-  const [h, m] = t.split(":").map(Number);
+  const clean = (t || "").slice(0, 5); // "HH:MM"
+  const [h, m] = clean.split(":").map(Number);
   return h * 60 + m;
+}
 }
 function minToTime(m) {
   const hh = String(Math.floor(m / 60) % 24).padStart(2, "0");
@@ -38,7 +40,10 @@ function minToTime(m) {
   return `${hh}:${mm}`;
 }
 function normalizeEnd(t) {
-  return t === "00:00" ? 1440 : timeToMin(t);
+  // Supabase time may be "00:00:00"
+  const clean = (t || "").slice(0, 5); // "HH:MM"
+  return clean === "00:00" ? 1440 : timeToMin(clean);
+}
 }
 function overlaps(aS, aE, bS, bE) {
   return aS < bE && aE > bS;
