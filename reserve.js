@@ -17,7 +17,7 @@ function todayISO(){
   const d = new Date();
   return d.toISOString().slice(0,10);
 }
-dateEl.value = todayISO();
+dateEl.value = new Date().toISOString().split("T")[0];
 
 function timeToMin(t){
   const [h,m] = t.split(":").map(Number);
