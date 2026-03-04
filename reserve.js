@@ -152,9 +152,8 @@ async function login(){
 
 async function book(){
   msgEl.textContent = "";
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) { msgEl.textContent = "Please login first."; return; }
-  if (!selectedStart) { msgEl.textContent = "Select a time slot."; return; }
+  const user = await requireAuth(supabase, authUI);
+if (!user) return;
 
   const date = dateEl.value;
   const courtId = Number(courtEl.value);
