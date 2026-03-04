@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Manager • GBPH</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th,.tbl td{border-bottom:1px solid #eee;padding:10px;text-align:left;font-size:14px}
+    .tbl th{font-size:12px;color:#666}
+    .danger{background:#fff;color:#111;border:1px solid #ddd}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Admin Manager</h1>
+    <nav class="nav" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <a href="./index.html">Home</a>
+      <a href="./calendar.html">Daily Schedule</a>
+      <a href="./month.html">Monthly</a>
+      <a href="./my.html">My Bookings</a>
+      <a href="./admin-manager.html">Admin</a>
+      <span style="flex:1"></span>
+      <div id="profileArea"></div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="row">
+        <div>
+          <label>Date</label>
+          <input id="date" type="date" />
+        </div>
+        <div>
+          <label>Court</label>
+          <select id="court">
+            <option value="all">All</option>
+          </select>
+        </div>
+      </div>
+      <button id="refresh">Refresh</button>
+      <div id="msg" class="small" style="margin-top:10px;"></div>
+    </section>
+
+    <section class="card">
+      <div style="overflow:auto;">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Court</th>
+              <th>User</th>
+              <th>Status</th>
+              <th>Fee</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./admin-manager.js"></script>
+</body>
+</html>
