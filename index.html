@@ -7,8 +7,18 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
   <script type="module">
-  import { initHeaderAuth } from "./app-init.js";
-  initHeaderAuth();
+  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  import { initAuthUI } from "./auth-ui.js";
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const authUI = initAuthUI(supabase);
+
+  await authUI.refresh();
+
+  // Show login/signup popup immediately if not logged in
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) authUI.openAuth("login");
 </script>
 <body>
   <header class="header">
