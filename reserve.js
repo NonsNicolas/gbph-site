@@ -4,6 +4,9 @@ import { initAuthUI, requireAuth } from "./auth-ui.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const authUI = initAuthUI(supabase);
+await authUI.refresh();
+
 // DOM
 const $ = (id) => document.getElementById(id);
 const dateEl = $("date");
