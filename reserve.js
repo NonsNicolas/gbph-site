@@ -23,6 +23,19 @@ const selectedEl = $("selected");
 const msgEl = $("msg");
 const btnBook = $("btnBook");
 
+// Pre-fill from Calendar link
+const params = new URLSearchParams(location.search);
+const qDate = params.get("date");
+const qCourt = params.get("court");
+
+if (qDate && dateEl) {
+  dateEl.value = qDate;
+}
+
+if (qCourt && qCourt !== "all" && courtEl) {
+  courtEl.value = qCourt;
+}
+
 // Guard: ensure page has required elements
 if (!dateEl || !courtEl || !slotsEl || !selectedEl || !msgEl || !btnBook) {
   console.error("reserve.html is missing required IDs.");
