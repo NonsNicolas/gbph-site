@@ -164,3 +164,32 @@ button[disabled]{ opacity:.5; cursor:not-allowed; }
     grid-template-columns: 1fr;
   }
 }
+/* ===== Navbar layout fix ===== */
+
+header,
+.navbar,
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Navigation links stay on the left */
+nav {
+  display: flex;
+  gap: 18px;
+}
+
+/* Push profile area to the far right */
+#profileArea {
+  margin-left: auto;
+}
+
+/* Profile button style (optional improvement) */
+#profileArea button {
+  background: #111;
+  color: white;
+  border-radius: 10px;
+  padding: 6px 12px;
+  border: none;
+}
