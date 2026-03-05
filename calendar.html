@@ -1,142 +1,63 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Calendar • GBPH</title>
   <link rel="stylesheet" href="./styles.css" />
-  <style>
-    /* extra styles for the grid */
-    .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
-    .toolbar > div { flex: 1 1 220px; }
-    .legend { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:#555; }
-    .pill { padding:6px 10px; border-radius:999px; border:1px solid #ddd; background:#fff; }
-    .gridwrap { overflow:auto; border:1px solid #e6e6e6; border-radius:14px; }
-    table { width:100%; border-collapse:separate; border-spacing:0; min-width:720px; }
-    th, td { border-bottom:1px solid #eee; border-right:1px solid #eee; padding:10px; vertical-align:top; }
-    th { position:sticky; top:0; background:#fff; z-index:2; text-align:left; font-size:13px; }
-    th:first-child { left:0; z-index:3; }
-    td:first-child { position:sticky; left:0; background:#fff; z-index:1; width:110px; font-weight:600; }
-    tr:last-child td { border-bottom:none; }
-    td:last-child, th:last-child { border-right:none; }
-
-    .cell { border-radius:12px; padding:10px; border:1px solid #ddd; background:#fff; }
-    .status { font-size:12px; color:#555; margin-top:4px; }
-
-    /* Status looks */
-    .available { border-color:#111; }
-    .booked { opacity:.6; }
-    .blocked { opacity:.6; }
-    .event { opacity:.6; }
-
-    /* Mobile: keep it clean */
-    @media (max-width: 720px) {
-      .gridwrap { border-radius:12px; }
-      th, td { padding:8px; }
-      td:first-child { width:96px; }
-      table { min-width:640px; }
-    }
-  </style>
 </head>
-  <script type="module">
-  import { initHeaderAuth } from "./app-init.js";
-  initHeaderAuth();
-</script>
-  <script src="./navbar.js"></script>
 <body>
+
+  <!-- Professional navbar (from your template) -->
   <header class="gb-topbar">
-  <a class="gb-brand" href="./index.html">
-    <span class="gb-logo">GB</span>
-    <span class="gb-brand-text">Gym Buddies Pickle House</span>
-  </a>
+    <a class="gb-brand" href="./index.html">
+      <span class="gb-logo">GB</span>
+      <span class="gb-brand-text">Gym Buddies Pickle House</span>
+    </a>
 
-  <button class="gb-burger" id="gbBurger" aria-label="Open menu" aria-expanded="false">
-    ☰
-  </button>
+    <button class="gb-burger" id="gbBurger" aria-label="Open menu" aria-expanded="false">☰</button>
 
-  <nav class="gb-nav" id="gbNav">
-    <a href="./index.html" class="gb-link">Home</a>
-    <a href="./reserve.html" class="gb-link">Reserve</a>
-    <a href="./calendar.html" class="gb-link">Calendar</a>
-    <a href="./monthly.html" class="gb-link">Monthly</a>
-    <a href="./my.html" class="gb-link">My Bookings</a>
-    <a href="./admin.html" class="gb-link">Admin</a>
-  </nav>
+    <nav class="gb-nav" id="gbNav">
+      <a href="./index.html" class="gb-link">Home</a>
+      <a href="./reserve.html" class="gb-link">Reserve</a>
+      <a href="./calendar.html" class="gb-link">Calendar</a>
+      <a href="./monthly.html" class="gb-link">Monthly</a>
+      <a href="./my.html" class="gb-link">My Bookings</a>
+      <a href="./admin.html" class="gb-link">Admin</a>
+    </nav>
 
-  <!-- Profile ALWAYS right -->
-  <div class="gb-profile-area" id="profileArea"></div>
-</header>
+    <div class="gb-profile-area" id="profileArea"></div>
+  </header>
 
   <main class="container">
-    <section class="card">
-      <div class="toolbar">
-        <div>
-          <label>Date</label>
-          <input id="date" type="date" />
+    <section class="card" style="padding:14px;">
+      <div class="cal-toolbar">
+        <div class="cal-left">
+          <button class="cal-btn" id="btnToday" type="button">Today</button>
+          <button class="cal-icon" id="btnPrev" type="button" aria-label="Previous month">‹</button>
+          <button class="cal-icon" id="btnNext" type="button" aria-label="Next month">›</button>
+          <div class="cal-title" id="monthTitle">Month YYYY</div>
         </div>
-        <div>
-          <label>View</label>
-          <select id="view">
-            <option value="all">All courts (grid)</option>
-            <option value="c1">Court 1 only</option>
-            <option value="c2">Court 2 only</option>
-            <option value="c3">Court 3 only</option>
+
+        <div class="cal-right">
+          <label class="cal-label" for="courtFilter">Court</label>
+          <select id="courtFilter" class="cal-select">
+            <option value="all">All</option>
           </select>
         </div>
       </div>
 
-      <div class="legend" style="margin-top:10px;">
-        <span class="pill"><b>Available</b> (can book)</span>
-        <span class="pill">Booked</span>
-        <span class="pill">Open Play / Club Night</span>
-        <span class="pill">Blocked (Admin)</span>
+      <div class="cal-weekdays">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
       </div>
 
-      <p class="small" style="margin-top:10px;">
-        Hours: 6:00 AM–12:00 AM • Slots: 1 hour • Events/Blocks are unavailable
-      </p>
+      <div class="cal-grid" id="calGrid"></div>
+
+      <div class="small" id="calMsg" style="margin-top:10px;"></div>
     </section>
-
-    <section class="card">
-  <h2>Login (to book)</h2>
-  <div class="row">
-    <input id="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
-  </div>
-  <div class="row">
-    <button id="btnLogin">Login</button>
-    <button id="btnSignup">Sign up</button>
-  </div>
-  <p id="authMsg" class="small"></p>
-</section>
-
-<section class="card">
-  <div id="msg" class="small"></div>
-  <div class="gridwrap">
-    <table id="grid">
-      <thead id="thead"></thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-  <p class="small" style="margin-top:10px;">
-    Tap an <b>Available</b> cell to book. (₱300/hr, pay on-site)
-  </p>
-</section>
-
-<!-- Booking popup -->
-<div id="popup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); padding:18px;">
-  <div style="max-width:520px; margin:10vh auto; background:#fff; border-radius:16px; border:1px solid #eee; padding:16px;">
-    <h3 style="margin:0 0 10px 0;">Confirm booking</h3>
-    <div id="popupInfo" class="small" style="margin-bottom:10px;"></div>
-    <div class="row">
-      <button id="btnConfirm">Confirm</button>
-      <button id="btnCancel" style="background:#fff; color:#111; border:1px solid #ddd;">Cancel</button>
-    </div>
-    <p id="popupMsg" class="small" style="margin-top:10px;"></p>
-  </div>
-</div>
   </main>
 
+  <script src="./navbar.js"></script>
   <script type="module" src="./calendar.js"></script>
 </body>
 </html>
