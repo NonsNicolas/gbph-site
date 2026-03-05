@@ -11,19 +11,28 @@
   initHeaderAuth();
 </script>
 <body>
-  <header class="header">
-    <h1>My Bookings</h1>
-    <nav class="nav" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-  <a href="./index.html">Home</a>
-  <a href="./reserve.html">Reserve</a>
-  <a href="./calendar.html">Calendar</a>
-  <a href="./month.html">Monthly</a>
-  <a href="./my.html">My Bookings</a>
-  <a href="./admin-manager.html">Admin</a>
-  <span style="flex:1"></span>
-  <div id="profileArea"></div>
-</nav>
-  </header>
+  <header class="gb-topbar">
+  <a class="gb-brand" href="./index.html">
+    <span class="gb-logo">GB</span>
+    <span class="gb-brand-text">Gym Buddies Pickle House</span>
+  </a>
+
+  <button class="gb-burger" id="gbBurger" aria-label="Open menu" aria-expanded="false">
+    ☰
+  </button>
+
+  <nav class="gb-nav" id="gbNav">
+    <a href="./index.html" class="gb-link">Home</a>
+    <a href="./reserve.html" class="gb-link">Reserve</a>
+    <a href="./calendar.html" class="gb-link">Calendar</a>
+    <a href="./monthly.html" class="gb-link">Monthly</a>
+    <a href="./my.html" class="gb-link">My Bookings</a>
+    <a href="./admin.html" class="gb-link">Admin</a>
+  </nav>
+
+  <!-- Profile ALWAYS right -->
+  <div class="gb-profile-area" id="profileArea"></div>
+</header>
 
   <main class="container">
     <section class="card">
