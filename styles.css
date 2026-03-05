@@ -114,3 +114,53 @@ button[disabled]{ opacity:.5; cursor:not-allowed; }
 }
 .authMsg{ font-size:12px; color:#444; min-height:16px; }
 .authHint{ font-size:12px; color:#777; }
+
+/* --- Admin filters layout fix (prevents overlap) --- */
+.filters,
+.admin-filters,
+.filter-row,
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.filters .field,
+.admin-filters .field,
+.filter-row .field,
+.toolbar .field {
+  min-width: 0;
+}
+
+.filters input,
+.filters select,
+.admin-filters input,
+.admin-filters select,
+.filter-row input,
+.filter-row select,
+.toolbar input,
+.toolbar select {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Make the Refresh button span full width under the two fields (optional) */
+.filters .btn,
+.admin-filters .btn,
+.filter-row .btn,
+.toolbar .btn,
+#btnRefresh {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+/* Mobile: stack */
+@media (max-width: 640px) {
+  .filters,
+  .admin-filters,
+  .filter-row,
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+}
