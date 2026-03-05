@@ -193,3 +193,111 @@ nav {
   padding: 6px 12px;
   border: none;
 }
+/* ===== Professional responsive topbar ===== */
+.gb-topbar{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.gb-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-decoration:none;
+  color:#111;
+  white-space: nowrap;
+}
+
+.gb-logo{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#111;
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+}
+
+.gb-brand-text{
+  font-weight:800;
+  font-size:14px;
+}
+
+.gb-nav{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin-left: 12px;
+}
+
+.gb-link{
+  text-decoration:none;
+  color:#111;
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+.gb-link:hover{
+  background:#f5f5f5;
+}
+
+/* Profile stays right */
+.gb-profile-area{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+}
+
+/* Burger hidden on desktop */
+.gb-burger{
+  display:none;
+  border:1px solid #ddd;
+  background:#fff;
+  border-radius:10px;
+  width:40px;
+  height:40px;
+  cursor:pointer;
+  font-size:18px;
+  line-height:1;
+}
+
+/* Mobile layout */
+@media (max-width: 860px){
+  .gb-brand-text{ display:none; } /* compact */
+  .gb-burger{ display:inline-flex; align-items:center; justify-content:center; }
+
+  .gb-nav{
+    position: fixed;
+    top: 60px; /* below bar */
+    left: 12px;
+    right: 12px;
+    display:none;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    background:#fff;
+    border:1px solid #eee;
+    border-radius:14px;
+    box-shadow:0 14px 40px rgba(0,0,0,.10);
+    z-index: 60;
+  }
+
+  .gb-nav.open{ display:flex; }
+
+  .gb-link{
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+  }
+}
